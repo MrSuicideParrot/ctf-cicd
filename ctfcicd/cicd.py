@@ -1,6 +1,7 @@
 import os
 import re
 import logging as log
+import subprocess
 
 
 class CiCd:
@@ -12,7 +13,7 @@ class CiCd:
             log.error("CTFD_TOKEN or CTFD_URL not defined in the environment variables")
             exit(1)
 
-        self.deploy_host = os.getenv("DEPLOY_HOST", default=None)
+        self.deploy_uri = os.getenv("DEPLOY_HOST", default=None)
 
         os.system(f"echo '{CTFD_URL}\n{CTFD_TOKEN}\ny' | ctf init")
         log.info("CTFcli initialize")
@@ -25,8 +26,10 @@ class CiCd:
         for challenge in challenges:
             if os.path.exists(f"{challenge}/challenge.yml"):
                 log.info(f"Syncing challenge: {challenge}")
-                os.execlp("ctf", "ctf", "challenge", "sync", challenge)
-                os.execlp("ctf", "ctf", "challenge", "install", challenge)
+                subprocess.run(["ctf", "challenge", "sync", challenge])
+                subprocess.run(["ctf", "challenge", "install", challenge])
+                if self.deploy_uri is not None:
+                    subprocess.run(["ctf", "challenge", "deploy", challenge, "--host=%s" % self.deploy_uri ])
 
     def deploy_current_folder(self):
         for i in self.get_categories():
