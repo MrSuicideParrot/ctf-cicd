@@ -10,6 +10,17 @@ The majority of the features are implemented using ctfcli and also inpired by th
 
 `ctf-cicd` deploys all challenges (challenge.yml) that are detected in the current directory or any of its subfolders. To define challenges, they must respect the [ctfcli specification](https://github.com/CTFd/ctfcli#challenge-specification).
 
+### Installation
+
+``
+$ pip3 install .
+``
+
+### Running
+``
+$ ctfcicd
+``
+
 ### Settings
 
 `CTFD_TOKEN`: CTFd Admin Access Token (ex. d41d8cd98f00b204e9800998ecf8427e)
