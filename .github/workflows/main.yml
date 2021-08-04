@@ -1,6 +1,8 @@
-on:
+
+on:  
   push:
-    branches: [ main ]
+    tags:
+      - '*'
 
 jobs:
   release:
@@ -9,7 +11,6 @@ jobs:
     - name: Check out repository code
       uses: actions/checkout@v2
     - name: Publish package
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@v1.4.2
       with:
         user: __token__
