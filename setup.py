@@ -1,7 +1,9 @@
 from setuptools import setup, find_packages
 
 REQUIRES = [
-    "ctfcli==0.0.8",
+    "docker~=5.0.2",
+    "requests~=2.22.0",
+    "PyYAML~=5.4",
 ]
 
 setup(
