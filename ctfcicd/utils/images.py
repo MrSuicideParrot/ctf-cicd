@@ -1,7 +1,5 @@
+import re
+
 
 def sanitize_name(name):
-    """
-    Function to sanitize names to docker safe image names
-    TODO melhorar
-    """
-    return name.lower().replace(" ", "-")
+    return re.sub(r'\W+', '', name.lower().replace(" ", "_"))

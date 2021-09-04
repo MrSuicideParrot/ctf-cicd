@@ -4,14 +4,14 @@ from pathlib import Path
 
 from docker import from_env
 
-from images import sanitize_name
+from .images import sanitize_name
 
 
-def ssh(challenge, host, network: None):
+def ssh(challenge, host, network="bridge"):
     os.environ["DOCKER_HOST"] = host
     client = from_env(use_ssh_client=True)
 
-    path = Path(challenge.file_path).parent.absolute()
+    path = str(Path(challenge.file_path).parent.absolute())
 
     image_name = sanitize_name(challenge.get("image"))
     container_name = image_name + "_cont"
@@ -39,22 +39,13 @@ def ssh(challenge, host, network: None):
 
     exposed_ports = {}
     for i in ports:
-        exposed_ports[i] = i
+        exposed_ports[i] = i.split("/")[0]
 
-    client.containers.run(image=image_name, name=container_name, restart_policy="unless-stopped",
-                          exposed_ports=exposed_ports, network=network, detach=True)
+    client.containers.run(image=image_name, name=container_name, restart_policy={"Name": "unless-stopped"},
+                          ports=exposed_ports, network=network, detach=True)
     log.info("Container update with success")
 
-    """
-    temp = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{str(image_name)}.docker.tar")
-    for chunk in image.save():
-        temp.write(chunk)
-    temp.close()
-
-    ssh_host.send_file(temp.name)
-    temp.delete
-    ssh_host.close()
-    """
+    return list(exposed_ports.values())[0]
 
 
 DEPLOY_HANDLERS = {"ssh": ssh}

@@ -27,4 +27,6 @@ $ ctfcicd
 
 `CTFD_URL`: CTFd instance URL (ex. https://demo.ctfd.io)
 
-`DEPLOY_HOST`: URI of the method that you want to use to deploy your dockerized challenge ([More info](https://github.com/CTFd/ctfcli/blob/226036fba901ac93a5dd0dab20233cd2168eeacb/ctfcli/spec/challenge-example.yml#L27)). 
+`DEPLOY_HOST`: URI of the method that you want to use to deploy your dockerized challenge ([More info](https://github.com/CTFd/ctfcli/blob/226036fba901ac93a5dd0dab20233cd2168eeacb/ctfcli/spec/challenge-example.yml#L27)).
+
+`DEPLOY_NETWORK`: Optional variable to specify to which network you want the container attached.

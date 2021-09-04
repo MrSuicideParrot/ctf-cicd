@@ -6,10 +6,12 @@ from ctfcicd.utils.deploy import DEPLOY_HANDLERS
 from utils.challenge import load_installed_challenges, load_challenge, Yaml, sync_challenge, create_challenge
 from urllib.parse import urlparse
 
+log.basicConfig(level=log.INFO)
 
 class CiCd:
     def __init__(self):
         self.deploy_uri = os.getenv("DEPLOY_HOST", default=None)
+        self.deploy_network = os.getenv("DEPLOY_NETWORK", default="bridge")
         log.info("CTFcli initialized")
 
     def check_if_challenge_exists(self, challenge: Yaml) -> bool:
@@ -24,8 +26,6 @@ class CiCd:
     def sync_folder(self, category):
         local_challenges = [f"{category}/{name}" for name in os.listdir(f"./{category}") if
                             os.path.isdir(f"{category}/{name}")]
-
-        installed_challenges = load_installed_challenges()
 
         for challenge in local_challenges:
             if os.path.exists(f"{challenge}/challenge.yml"):
@@ -54,21 +54,19 @@ class CiCd:
                         log.warning("Provided host has no URI scheme. Provide a URI scheme like ssh:// or registry://")
 
                     try:
-                        status, domain, port = DEPLOY_HANDLERS[url.scheme](
-                            challenge=chall_class, host=target_host
+                        port = DEPLOY_HANDLERS[url.scheme](
+                            challenge=chall_class, host=target_host, network=self.deploy_network
                         )
                     except Exception as e:
-                        log.warning("Error while deploying challenge - ", e)
+                        log.warning("Error while deploying challenge - " + str(e))
                         continue
 
-                    if status:
-                        log.info(f"Challenge deployed at {domain}:{port}")
-                    else:
-                        log.warning(f"An error occured during deployment")
+                    if port is not None:
+                        log.info(f"Challenge {challenge} deployed at {url.netloc[url.netloc.find('@') + 1 :]}:{port}")
 
     def deploy_current_folder(self):
         for i in self.get_categories():
-            log.info("Synchronizing " + i + "challenges")
+            log.info("Synchronizing " + i + " challenges")
             self.sync_folder(i)
 
     # Each category is in it's own directory, get the names of all directories that do not begin with '.'.
