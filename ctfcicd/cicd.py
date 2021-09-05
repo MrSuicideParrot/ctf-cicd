@@ -3,7 +3,7 @@ import re
 import logging as log
 
 from ctfcicd.utils.deploy import DEPLOY_HANDLERS
-from utils.challenge import load_installed_challenges, load_challenge, Yaml, sync_challenge, create_challenge
+from ctfcicd.utils.challenge import load_installed_challenges, load_challenge, Yaml, sync_challenge, create_challenge
 from urllib.parse import urlparse
 
 log.basicConfig(level=log.INFO)
