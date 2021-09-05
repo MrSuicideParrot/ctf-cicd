@@ -8,7 +8,7 @@ REQUIRES = [
 
 setup(
     name='ctfcicd',
-    version='0.0.1',
+    version='0.1.0',
     install_requires=REQUIRES,
     packages=find_packages(),
     url='https://github.com/MrSuicideParrot/ctf-cicd',
