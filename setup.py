@@ -4,11 +4,12 @@ REQUIRES = [
     "docker~=5.0.2",
     "requests~=2.22.0",
     "PyYAML~=5.4",
+    "paramiko"
 ]
 
 setup(
     name='ctfcicd',
-    version='0.1.1',
+    version='0.1.2',
     install_requires=REQUIRES,
     packages=find_packages(),
     url='https://github.com/MrSuicideParrot/ctf-cicd',
