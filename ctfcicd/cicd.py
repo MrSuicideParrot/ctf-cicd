@@ -43,7 +43,7 @@ class CiCd:
                     log.info(f"Installing {challenge}/challenge.yml")
                     create_challenge(chall_class)
 
-                if chall_class.get("image") is not None:
+                if chall_class.get("image") is not None or os.path.exists(f"{challenge}/docker-compose.yml"):
                     target_host = chall_class.get("host") or self.deploy_uri
                     if bool(target_host) is False:
                         log.warning("This challenge can't be deployed because there is no target host to deploy to.")

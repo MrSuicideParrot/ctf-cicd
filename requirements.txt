@@ -3,3 +3,4 @@ requests~=2.22.0
 PyYAML~=5.4
 setuptools~=57.4.0
 paramiko
+docker-compose
