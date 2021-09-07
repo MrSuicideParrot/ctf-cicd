@@ -59,7 +59,7 @@ class CiCd:
                         )
                     except Exception as e:
                         log.warning("Error while deploying challenge - " + str(e))
-                        continue
+                        exit(1)
 
                     if port is not None:
                         log.info(f"Challenge {challenge} deployed at {url.netloc[url.netloc.find('@') + 1 :]}:{port}")
