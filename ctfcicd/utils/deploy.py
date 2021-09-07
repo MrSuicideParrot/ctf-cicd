@@ -11,7 +11,8 @@ from .images import sanitize_name
 def ssh(challenge, host, network="bridge"):
     os.environ["DOCKER_HOST"] = host
 
-    if os.path.exists(f"{challenge}/docker-compose.yml"):
+    path = str(Path(challenge.file_path).parent.absolute())
+    if os.path.exists(f"{path}/docker-compose.yml"):
         log.info("Deploying docker-compose")
         subprocess.run(["docker-compose", "-f", f"{challenge}/docker-compose.yml", "up", "-d"], check=True)
         log.info("Docker-compose deployed correctly.")
@@ -19,8 +20,6 @@ def ssh(challenge, host, network="bridge"):
 
     else:
         client = from_env(use_ssh_client=True)
-
-        path = str(Path(challenge.file_path).parent.absolute())
 
         image_name = sanitize_name(challenge.get("image"))
         container_name = image_name + "_cont"
