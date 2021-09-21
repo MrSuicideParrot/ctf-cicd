@@ -22,6 +22,13 @@ def ssh(challenge, host, network="bridge"):
         client = from_env(use_ssh_client=True)
 
         image_name = sanitize_name(challenge.get("image"))
+        if image_name == "":
+            image_name = sanitize_name(challenge.get("name"))
+            if image_name == "":
+                log.warning("Unable to build docker image for " + challenge.get("name"))
+                return None
+
+
         container_name = image_name + "_cont"
 
         image, _ = client.images.build(path=path, tag=image_name)
