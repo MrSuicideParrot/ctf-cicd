@@ -14,6 +14,7 @@ def ssh(challenge, host, network="bridge"):
     path = str(Path(challenge.file_path).parent.absolute())
     if os.path.exists(f"{path}/docker-compose.yml"):
         log.info("Deploying docker-compose")
+        subprocess.run(["docker-compose", "-f", f"{path}/docker-compose.yml", "down"], check=False)
         subprocess.run(["docker-compose", "-f", f"{path}/docker-compose.yml", "up", "-d"], check=True)
         log.info("Docker-compose deployed correctly.")
         return None
