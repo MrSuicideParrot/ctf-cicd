@@ -38,7 +38,7 @@ class CiCd:
 
                 if self.check_if_challenge_exists(chall_class):
                     log.info(f"Synchronising {challenge}/challenge.yml")
-                    sync_challenge(chall_class)
+                    sync_challenge(chall_class,ignore=["state"])
                 else:
                     log.info(f"Installing {challenge}/challenge.yml")
                     create_challenge(chall_class)
