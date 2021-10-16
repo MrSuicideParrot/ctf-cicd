@@ -53,8 +53,6 @@ def sync_challenge(challenge, ignore=[]):
     if challenge.get("connection_info") and "connection_info" not in ignore:
         data["connection_info"] = challenge.get("connection_info")
 
-    data["state"] = "hidden"
-
     installed_challenges = load_installed_challenges()
     for c in installed_challenges:
         if c["name"] == challenge["name"]:
