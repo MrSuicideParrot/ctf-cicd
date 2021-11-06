@@ -1,6 +1,8 @@
 import os
+from pathlib import PurePath
 import re
 import logging as log
+import subprocess
 
 from ctfcicd.utils.deploy import DEPLOY_HANDLERS
 from ctfcicd.utils.challenge import load_installed_challenges, load_challenge, Yaml, sync_challenge, create_challenge
@@ -22,19 +24,14 @@ class CiCd:
 
         return False
 
-    # Synchronize all challenges in the given category, where each challenge is in it's own folder.
-    def sync_folder(self, category):
-        local_challenges = [f"{category}/{name}" for name in os.listdir(f"./{category}") if
-                            os.path.isdir(f"{category}/{name}")]
-
-        for challenge in local_challenges:
-            if os.path.exists(f"{challenge}/challenge.yml"):
+    def deploy_challenge(self, challenge):
+        if os.path.exists(f"{challenge}/challenge.yml"):
                 log.info(f"Checking challenge: {challenge}")
                 try:
                     chall_class = load_challenge(f"{challenge}/challenge.yml")
                 except Exception as e:
                     log.warning(f"Error loading challenge {challenge}/challenge.yml - ", e)
-                    continue
+                    return
 
                 if self.check_if_challenge_exists(chall_class):
                     log.info(f"Synchronising {challenge}/challenge.yml")
@@ -47,7 +44,7 @@ class CiCd:
                     target_host = chall_class.get("host") or self.deploy_uri
                     if bool(target_host) is False:
                         log.warning("This challenge can't be deployed because there is no target host to deploy to.")
-                        continue
+                        return
 
                     url = urlparse(target_host)
                     if bool(url.netloc) is False:
@@ -63,6 +60,21 @@ class CiCd:
 
                     if port is not None:
                         log.info(f"Challenge {challenge} deployed at {url.netloc[url.netloc.find('@') + 1 :]}:{port}")
+
+    # Synchronize all challenges in the given category, where each challenge is in it's own folder.
+    def sync_folder(self, category):
+        local_challenges = [f"{category}/{name}" for name in os.listdir(f"./{category}") if
+                            os.path.isdir(f"{category}/{name}")]
+
+        for challenge in local_challenges:
+            self.deploy_challenge(challenge)
+
+
+    def sync_folder_with_git(self, github_event, github_sha):
+        files = subprocess.check_output(['git', 'diff', '--name-only', github_event, github_sha]).split()
+        folders_with_change = [ PurePath(i).parents[0] for i in files ]
+        for i in folders_with_change:
+            self.deploy_challenge(i)
 
     def deploy_current_folder(self):
         for i in self.get_categories():
