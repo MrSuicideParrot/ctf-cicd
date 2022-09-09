@@ -24,9 +24,16 @@ class CiCd:
 
         return False
 
-    def deploy_challenge(self, challenge):
+    def deploy_challenge(self, challenge: str, prod=True):
         if os.path.exists(f"{challenge}/challenge.yml"):
                 log.info(f"Checking challenge: {challenge}")
+
+                if prod:
+                    if os.path.exists(f"{challenge}/disabled"):
+                        log.info(f"{challenge} is disabled.")
+                        log.info(f"{challenge}" won't be deployed.)
+                        return
+
                 try:
                     chall_class = load_challenge(f"{challenge}/challenge.yml")
                 except Exception as e:
@@ -70,11 +77,11 @@ class CiCd:
             self.deploy_challenge(challenge)
 
 
-    def sync_folder_with_git(self, github_event, github_sha):
+    def sync_folder_with_git(self, github_event, github_sha, prod):
         files = subprocess.check_output(['git', 'diff', '--name-only', github_event, github_sha]).split()
         folders_with_change = [ PurePath(i.decode()).parents[0] for i in files ]
         for i in folders_with_change:
-            self.deploy_challenge(i)
+            self.deploy_challenge(i, prod)
 
     def deploy_current_folder(self):
         for i in self.get_categories():

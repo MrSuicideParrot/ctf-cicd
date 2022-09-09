@@ -1,10 +1,12 @@
 from ctfcicd import CiCd
 from sys import argv
+from os import getenv
 
 
 def main():
     if len(argv) == 3 :
-        CiCd().sync_folder_with_git(argv[1], argv[2])
+        prod =  not bool(getenv("TESTING_DEPLOYMENT"))
+        CiCd().sync_folder_with_git(argv[1], argv[2], prod)
     else:
         CiCd().deploy_current_folder()
 
