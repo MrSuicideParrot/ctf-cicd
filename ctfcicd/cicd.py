@@ -31,7 +31,7 @@ class CiCd:
                 if prod:
                     if os.path.exists(f"{challenge}/disabled"):
                         log.info(f"{challenge} is disabled.")
-                        log.info(f"{challenge}" won't be deployed.)
+                        log.info(f"{challenge} won't be deployed.")
                         return
 
                 try:
