@@ -78,6 +78,11 @@ class CiCd:
 
 
     def sync_folder_with_git(self, github_event, github_sha, prod):
+        if github_event == '0000000000000000000000000000000000000000':
+            log.info("There is not event before")
+            self.deploy_current_folder()
+            return
+
         files = subprocess.check_output(['git', 'diff', '--name-only', github_event, github_sha]).split()
         folders_with_change = [ PurePath(i.decode()).parents[0] for i in files ]
         for i in folders_with_change:
