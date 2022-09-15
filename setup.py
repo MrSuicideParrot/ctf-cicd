@@ -10,7 +10,7 @@ REQUIRES = [
 
 setup(
     name='ctfcicd',
-    version='0.2.4',
+    version='0.2.5',
     install_requires=REQUIRES,
     packages=find_packages(),
     url='https://github.com/MrSuicideParrot/ctf-cicd',

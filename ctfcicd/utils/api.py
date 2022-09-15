@@ -13,6 +13,8 @@ class APISession(Session):
         # Strip out ending slashes and append a singular one so we generate
         # clean base URLs for both main deployments and subdir deployments
         self.prefix_url = prefix_url.rstrip("/") + "/"
+        #TODO make it optional
+        self.verify = False
 
     def request(self, method, url, *args, **kwargs):
         # Strip out the preceding / so that urljoin creates the right url
