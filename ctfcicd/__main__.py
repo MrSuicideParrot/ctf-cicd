@@ -8,10 +8,10 @@ def main():
     parser = ArgumentParser(description='Deploy challenges in ctfd')
     parser.add_argument('--insecure-tls-verification', action=BooleanOptionalAction, default=False)
     parser.add_argument('--testing', action=BooleanOptionalAction, default=False)
-    parser.add_argument('--commits', action='extend', nargs="2", type=str)
+    parser.add_argument('--commits', action='extend', nargs=2, type=str)
     args = parser.parse_args()
 
-    if len(args.commits) == 2:
+    if args.commits is not None and len(args.commits) == 2:
         CiCd(not args.testing, not args.insecure_tls_verification).sync_folder_with_git(*args.commits)
     else:
         CiCd(not args.testing, not args.insecure_tls_verification).deploy_current_folder()
