@@ -8,7 +8,7 @@ def main():
     parser = ArgumentParser(description='Deploy challenges in ctfd')
     parser.add_argument('--insecure-tls-verification', action=BooleanOptionalAction, default=False)
     parser.add_argument('--testing', action=BooleanOptionalAction, default=False)
-    parser.add_argument('--commits', action='extend', nargs=2, type=str)
+    parser.add_argument('--commits', action='extend', nargs='*', type=str)
     args = parser.parse_args()
 
     if args.commits is not None and len(args.commits) == 2:
