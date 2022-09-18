@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from .config import generate_session
+from .config import Config
 
 
 class Yaml(dict):
@@ -28,7 +28,7 @@ def load_challenge(path):
 
 
 def load_installed_challenges():
-    s = generate_session()
+    s = Config.generate_session()
     return s.get("/api/v1/challenges?view=admin", json=True).json()["data"]
 
 
@@ -61,7 +61,7 @@ def sync_challenge(challenge, ignore=[]):
     else:
         return
 
-    s = generate_session()
+    s = Config.generate_session()
 
     original_challenge = s.get(f"/api/v1/challenges/{challenge_id}", json=data).json()[
         "data"
@@ -227,7 +227,7 @@ def create_challenge(challenge, ignore=[]):
     if challenge.get("connection_info") and "connection_info" not in ignore:
         data["connection_info"] = challenge.get("connection_info")
 
-    s = generate_session()
+    s = Config.generate_session()
 
     r = s.post("/api/v1/challenges", json=data)
     r.raise_for_status()

@@ -1,15 +1,20 @@
+from ast import parse
 from ctfcicd import CiCd
 from sys import argv
 from os import getenv
-
+from argparse import ArgumentParser, BooleanOptionalAction
 
 def main():
-    if len(argv) == 3 :
-        prod =  not bool(getenv("TESTING_DEPLOYMENT"))
-        CiCd().sync_folder_with_git(argv[1], argv[2], prod)
-    else:
-        CiCd().deploy_current_folder()
+    parser = ArgumentParser(description='Deploy challenges in ctfd')
+    parser.add_argument('--insecure-tls-verification', action=BooleanOptionalAction, default=False)
+    parser.add_argument('--testing', action=BooleanOptionalAction, default=False)
+    parser.add_argument('--commits', action='extend', nargs="2", type=str)
+    args = parser.parse_args()
 
+    if len(args.commits) == 2:
+        CiCd(not args.testing, not args.insecure_tls_verification).sync_folder_with_git(*args.commits)
+    else:
+        CiCd(not args.testing, not args.insecure_tls_verification).deploy_current_folder()
 
 if __name__ == "__main__":
     main()

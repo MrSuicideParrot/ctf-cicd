@@ -1,3 +1,4 @@
+import imp
 import os
 from pathlib import PurePath
 import re
@@ -5,16 +6,19 @@ import logging as log
 import subprocess
 
 from ctfcicd.utils.deploy import DEPLOY_HANDLERS
+from ctfcicd.utils.config import Config
 from ctfcicd.utils.challenge import load_installed_challenges, load_challenge, Yaml, sync_challenge, create_challenge
 from urllib.parse import urlparse
 
 log.basicConfig(level=log.INFO)
 
 class CiCd:
-    def __init__(self):
+    def __init__(self, prod=True, tls_verify=True):
         self.deploy_uri = os.getenv("DEPLOY_HOST", default=None)
         self.deploy_network = os.getenv("DEPLOY_NETWORK", default="bridge")
         log.info("CTFcli initialized")
+        self.prod = prod
+        Config.generate_config(tls_verify)
 
     def check_if_challenge_exists(self, challenge: Yaml) -> bool:
         installed_challenges = load_installed_challenges()
@@ -24,11 +28,11 @@ class CiCd:
 
         return False
 
-    def deploy_challenge(self, challenge: str, prod=True):
+    def deploy_challenge(self, challenge: str):
         if os.path.exists(f"{challenge}/challenge.yml"):
                 log.info(f"Checking challenge: {challenge}")
 
-                if prod:
+                if self.prod:
                     if os.path.exists(f"{challenge}/disabled"):
                         log.info(f"{challenge} is disabled.")
                         log.info(f"{challenge} won't be deployed.")
@@ -77,16 +81,17 @@ class CiCd:
             self.deploy_challenge(challenge)
 
 
-    def sync_folder_with_git(self, github_event, github_sha, prod):
-        if github_event == '0000000000000000000000000000000000000000':
-            log.info("There is not event before")
-            self.deploy_current_folder()
-            return
+    def sync_folder_with_git(self, github_event, github_sha):
 
-        files = subprocess.check_output(['git', 'diff', '--name-only', github_event, github_sha]).split()
-        folders_with_change = [ PurePath(i.decode()).parents[0] for i in files ]
-        for i in folders_with_change:
-            self.deploy_challenge(i, prod)
+        try:
+            files = subprocess.check_output(['git', 'diff', '--name-only', github_event, github_sha]).split()
+            folders_with_change = [ PurePath(i.decode()).parents[0] for i in files ]
+            for i in folders_with_change:
+                self.deploy_challenge(i)
+        except subprocess.CalledProcessError as e:
+            log.warning(f"Error running - {e}")
+            self.deploy_current_folder()
+
 
     def deploy_current_folder(self):
         for i in self.get_categories():

@@ -8,13 +8,12 @@ from requests import Session
 
 
 class APISession(Session):
-    def __init__(self, prefix_url=None, *args, **kwargs):
+    def __init__(self, prefix_url=None, verify_tls=True, *args, **kwargs):
         super(APISession, self).__init__(*args, **kwargs)
         # Strip out ending slashes and append a singular one so we generate
         # clean base URLs for both main deployments and subdir deployments
         self.prefix_url = prefix_url.rstrip("/") + "/"
-        #TODO make it optional
-        self.verify = False
+        self.verify = verify_tls
 
     def request(self, method, url, *args, **kwargs):
         # Strip out the preceding / so that urljoin creates the right url
