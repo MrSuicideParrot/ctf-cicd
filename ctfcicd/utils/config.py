@@ -1,7 +1,4 @@
-from msilib.schema import ComboBox
 import os
-from tkinter.messagebox import NO
-
 from .api import APISession
 
 
