@@ -85,7 +85,7 @@ class CiCd:
         log.info("Differential syncronise")
         try:
             files = subprocess.check_output(['git', 'diff', '--name-only', github_event, github_sha]).split()
-            folders_with_change = [ PurePath(i.decode()).parents[-3] for i in files if len(PurePath(i.decode()).parents) >= 3 ]
+            folders_with_change = list(set([ PurePath(i.decode()).parents[-3] for i in files if len(PurePath(i.decode()).parents) >= 3 ]))
             for i in folders_with_change:
                 self.deploy_challenge(i)
         except subprocess.CalledProcessError as e:

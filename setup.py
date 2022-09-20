@@ -10,7 +10,7 @@ REQUIRES = [
 
 setup(
     name='ctfcicd',
-    version='1.0.6',
+    version='1.0.7',
     python_requires='>=3.9',
     install_requires=REQUIRES,
     packages=find_packages(),
