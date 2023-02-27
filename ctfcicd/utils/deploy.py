@@ -19,8 +19,9 @@ def ssh(challenge, host, network="bridge"):
             subprocess.run(["docker-compose", "-f", f"{path}/docker-compose.yml", "down"], check=False)
             subprocess.run(["docker-compose", "-f", f"{path}/docker-compose.yml", "up", "-d"], check=True)
         except Exception as e:
-            log.warning("Docker-compose deployed with problem.")
             log.warning(e)
+            log.critical("Docker-compose deployed with problem.")
+            exit(1)
         
         log.info("Docker-compose deployed correctly.")
         return None
@@ -32,7 +33,7 @@ def ssh(challenge, host, network="bridge"):
         if image_name == "":
             image_name = sanitize_name(challenge.get("name"))
             if image_name == "":
-                log.warning("Unable to build docker image for " + challenge.get("name"))
+                log.critical("Unable to build docker image for " + challenge.get("name"))
                 return None
 
 
