@@ -1,0 +1,28 @@
+[project]
+name = "ctfcicd"
+version = "1.1.0"
+description = "Tool for CI/CD pipelines to deploy CTFs"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  {name = "André Cirne"},
+]
+
+classifiers = [
+  "Programming Language :: Python"
+]
+
+dependencies = [
+    "docker~=5.0.2",
+    "requests~=2.22.0",
+    "PyYAML",
+    "paramiko",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/MrSuicideParrot/ctf-cicd"
+Repository = "https://github.com/MrSuicideParrot/ctf-cicd"
+
+[project.scripts]
+ctfcicd = "ctfcicd.__main__:main"
