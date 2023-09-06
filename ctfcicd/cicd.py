@@ -16,9 +16,9 @@ class CiCd:
     def __init__(self, prod=True, tls_verify=True):
         self.deploy_uri = os.getenv("DEPLOY_HOST", default=None)
         self.deploy_network = os.getenv("DEPLOY_NETWORK", default="bridge")
-        log.info("CTFcli initialized")
         self.prod = prod
         Config.generate_config(tls_verify)
+        log.info("CTFcli initialized")
 
     def check_if_challenge_exists(self, challenge: Yaml) -> bool:
         installed_challenges = load_installed_challenges()

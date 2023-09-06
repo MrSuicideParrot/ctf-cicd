@@ -1,7 +1,7 @@
 import os
 from .api import APISession
-
-
+import logging as log
+import subprocess
 
 class Config:
 
@@ -11,6 +11,17 @@ class Config:
         self.access_token = os.getenv("CTFD_TOKEN", default=None)
         self.url = os.getenv("CTFD_URL", default=None)
         self.verify_tls = verify_tls
+
+        status, result = subprocess.getstatusoutput("docker-compose -v")
+        if status == 0:
+            self.docker_compose_name = ["docker-compose"]
+        else:
+            status, result = subprocess.getstatusoutput("docker compose")
+            if status == 0:
+                self.docker_compose_name = ["docker", "compose"]
+            else:
+                log.fatal("Docker-compose binary not found! Unable to run!")
+                raise Exception("Unable to find docker-compose binary. Please install it on this machine.")
 
     @staticmethod
     def generate_config(verify_tls:bool):
@@ -27,3 +38,10 @@ class Config:
         s = APISession(prefix_url= Config._config.url, verify_tls= Config._config.verify_tls)
         s.headers.update({"Authorization": f"Token { Config._config.access_token}"})
         return s
+
+    @staticmethod
+    def get_docker_compose_command():
+        if Config._config == None:
+            raise Exception("Config was not initialized!")
+        
+        return Config._config.docker_compose_name
