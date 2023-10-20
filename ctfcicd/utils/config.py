@@ -37,7 +37,6 @@ class Config:
 
         s = APISession(prefix_url= Config._config.url, verify_tls= Config._config.verify_tls)
         s.headers.update({"Authorization": f"Token {Config._config.access_token}"})
-        s.headers.update({"Content-Type": "application/json"})
         return s
 
     @staticmethod
