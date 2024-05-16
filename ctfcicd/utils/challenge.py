@@ -5,6 +5,7 @@ Copy from ctfcli with some adaptations
 import logging
 import subprocess
 from pathlib import Path
+from typing import Any, Dict, List
 
 import yaml
 
@@ -12,19 +13,19 @@ from .config import Config
 
 
 class Yaml(dict):
-    def __init__(self, data, file_path=None):
+    def __init__(self, data: Dict[str, Any], file_path: str = ""):
         super().__init__(data)
         self.file_path = Path(file_path)
         self.directory = self.file_path.parent
 
 
-def load_challenge(path):
+def load_challenge(path: str) -> Yaml:
     try:
-        with open(path) as f:
+        with open(path, "r", encoding="utf-8") as f:
             return Yaml(data=yaml.safe_load(f.read()), file_path=path)
-    except FileNotFoundError:
-        raise Exception(f"No challenge.yml was found in {path}")
-        return
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(
+            f"No challenge.yml was found in {path}") from exc
 
 
 def load_installed_challenges():
@@ -32,8 +33,8 @@ def load_installed_challenges():
     return s.get("/api/v1/challenges?view=admin", json=True).json()["data"]
 
 
-def sync_challenge(challenge, ignore=[]):
-    data = {
+def sync_challenge(challenge: Yaml, ignore: List[str]) -> None:
+    data: Dict[str, Any] = {
         "name": challenge["name"],
         "category": challenge["category"],
         "description": challenge["description"],
@@ -73,20 +74,21 @@ def sync_challenge(challenge, ignore=[]):
     # Create new flags
     if challenge.get("flags") and "flags" not in ignore:
         # Delete existing flags
-        current_flags = s.get(f"/api/v1/flags", json=data).json()["data"]
+        current_flags = s.get("/api/v1/flags", json=data).json()["data"]
         for flag in current_flags:
             if flag["challenge_id"] == challenge_id:
                 flag_id = flag["id"]
                 r = s.delete(f"/api/v1/flags/{flag_id}", json=True)
                 r.raise_for_status()
         for flag in challenge["flags"]:
-            if type(flag) == str:
-                data = {"content": flag, "type": "static", "challenge_id": challenge_id}
-                r = s.post(f"/api/v1/flags", json=data)
+            if isinstance(flag, str):
+                data = {"content": flag, "type": "static",
+                        "challenge_id": challenge_id}
+                r = s.post("/api/v1/flags", json=data)
                 r.raise_for_status()
-            elif type(flag) == dict:
+            elif isinstance(flag, dict):
                 flag["challenge_id"] = challenge_id
-                r = s.post(f"/api/v1/flags", json=flag)
+                r = s.post("/api/v1/flags", json=flag)
                 r.raise_for_status()
 
     # Update topics
@@ -104,7 +106,7 @@ def sync_challenge(challenge, ignore=[]):
         # Add new challenge topics
         for topic in challenge["topics"]:
             r = s.post(
-                f"/api/v1/topics",
+                "/api/v1/topics",
                 json={
                     "value": topic,
                     "type": "challenge",
@@ -116,7 +118,7 @@ def sync_challenge(challenge, ignore=[]):
     # Update tags
     if challenge.get("tags") and "tags" not in ignore:
         # Delete existing tags
-        current_tags = s.get(f"/api/v1/tags", json=data).json()["data"]
+        current_tags = s.get("/api/v1/tags", json=data).json()["data"]
         for tag in current_tags:
             if tag["challenge_id"] == challenge_id:
                 tag_id = tag["id"]
@@ -124,14 +126,14 @@ def sync_challenge(challenge, ignore=[]):
                 r.raise_for_status()
         for tag in challenge["tags"]:
             r = s.post(
-                f"/api/v1/tags", json={"challenge_id": challenge_id, "value": tag}
+                "/api/v1/tags", json={"challenge_id": challenge_id, "value": tag}
             )
             r.raise_for_status()
 
     # Upload files
     if challenge.get("files") and "files" not in ignore:
         # Delete existing files
-        all_current_files = s.get(f"/api/v1/files?type=challenge", json=data).json()[
+        all_current_files = s.get("/api/v1/files?type=challenge", json=data).json()[
             "data"
         ]
         for f in all_current_files:
@@ -147,18 +149,18 @@ def sync_challenge(challenge, ignore=[]):
                 file_object = ("file", file_path.open(mode="rb"))
                 files.append(file_object)
             else:
-                logging.warning(f"File {file_path} was not found")
+                logging.warning("File %s was not found", file_path)
                 raise Exception(f"File {file_path} was not found")
 
         data = {"challenge_id": challenge_id, "type": "challenge"}
         # Specifically use data= here instead of json= to send multipart/form-data
-        r = s.post(f"/api/v1/files", files=files, data=data)
+        r = s.post("/api/v1/files", files=files, data=data)
         r.raise_for_status()
 
     # Create hints
     if challenge.get("hints") and "hints" not in ignore:
         # Delete existing hints
-        current_hints = s.get(f"/api/v1/hints", json=data).json()["data"]
+        current_hints = s.get("/api/v1/hints", json=data).json()["data"]
         for hint in current_hints:
             if hint["challenge_id"] == challenge_id:
                 hint_id = hint["id"]
@@ -166,8 +168,9 @@ def sync_challenge(challenge, ignore=[]):
                 r.raise_for_status()
 
         for hint in challenge["hints"]:
-            if type(hint) == str:
-                data = {"content": hint, "cost": 0, "challenge_id": challenge_id}
+            if isinstance(hint, str):
+                data = {"content": hint, "cost": 0,
+                        "challenge_id": challenge_id}
             else:
                 data = {
                     "content": hint["content"],
@@ -175,7 +178,7 @@ def sync_challenge(challenge, ignore=[]):
                     "challenge_id": challenge_id,
                 }
 
-            r = s.post(f"/api/v1/hints", json=data)
+            r = s.post("/api/v1/hints", json=data)
             r.raise_for_status()
 
     # Update requirements
@@ -183,11 +186,11 @@ def sync_challenge(challenge, ignore=[]):
         installed_challenges = load_installed_challenges()
         required_challenges = []
         for r in challenge["requirements"]:
-            if type(r) == str:
+            if isinstance(r, str):
                 for c in installed_challenges:
                     if c["name"] == r:
                         required_challenges.append(c["id"])
-            elif type(r) == int:
+            elif isinstance(r, int):
                 required_challenges.append(r)
 
         required_challenges = list(set(required_challenges))
@@ -206,7 +209,7 @@ def sync_challenge(challenge, ignore=[]):
         r.raise_for_status()
 
 
-def create_challenge(challenge, ignore=[]):
+def create_challenge(challenge: Yaml, ignore: List[str]):
     data = {
         "name": challenge["name"],
         "category": challenge["category"],
@@ -238,20 +241,21 @@ def create_challenge(challenge, ignore=[]):
     # Create flags
     if challenge.get("flags") and "flags" not in ignore:
         for flag in challenge["flags"]:
-            if type(flag) == str:
-                data = {"content": flag, "type": "static", "challenge_id": challenge_id}
-                r = s.post(f"/api/v1/flags", json=data)
+            if isinstance(flag, str):
+                data = {"content": flag, "type": "static",
+                        "challenge_id": challenge_id}
+                r = s.post("/api/v1/flags", json=data)
                 r.raise_for_status()
-            elif type(flag) == dict:
+            elif isinstance(flag, dict):
                 flag["challenge"] = challenge_id
-                r = s.post(f"/api/v1/flags", json=flag)
+                r = s.post("/api/v1/flags", json=flag)
                 r.raise_for_status()
 
     # Create topics
     if challenge.get("topics") and "topics" not in ignore:
         for topic in challenge["topics"]:
             r = s.post(
-                f"/api/v1/topics",
+                "/api/v1/topics",
                 json={
                     "value": topic,
                     "type": "challenge",
@@ -264,7 +268,7 @@ def create_challenge(challenge, ignore=[]):
     if challenge.get("tags") and "tags" not in ignore:
         for tag in challenge["tags"]:
             r = s.post(
-                f"/api/v1/tags", json={"challenge_id": challenge_id, "value": tag}
+                "/api/v1/tags", json={"challenge_id": challenge_id, "value": tag}
             )
             r.raise_for_status()
 
@@ -277,19 +281,20 @@ def create_challenge(challenge, ignore=[]):
                 file_object = ("file", file_path.open(mode="rb"))
                 files.append(file_object)
             else:
-                logging.warning(f"File {file_path} was not found")
+                logging.warning("File %s was not found", file_path)
                 raise Exception(f"File {file_path} was not found")
 
         data = {"challenge_id": challenge_id, "type": "challenge"}
         # Specifically use data= here instead of json= to send multipart/form-data
-        r = s.post(f"/api/v1/files", files=files, data=data)
+        r = s.post("/api/v1/files", files=files, data=data)
         r.raise_for_status()
 
     # Add hints
     if challenge.get("hints") and "hints" not in ignore:
         for hint in challenge["hints"]:
-            if type(hint) == str:
-                data = {"content": hint, "cost": 0, "challenge_id": challenge_id}
+            if isinstance(hint, str):
+                data = {"content": hint, "cost": 0,
+                        "challenge_id": challenge_id}
             else:
                 data = {
                     "content": hint["content"],
@@ -297,7 +302,7 @@ def create_challenge(challenge, ignore=[]):
                     "challenge_id": challenge_id,
                 }
 
-            r = s.post(f"/api/v1/hints", json=data)
+            r = s.post("/api/v1/hints", json=data)
             r.raise_for_status()
 
     # Add requirements
@@ -305,11 +310,11 @@ def create_challenge(challenge, ignore=[]):
         installed_challenges = load_installed_challenges()
         required_challenges = []
         for r in challenge["requirements"]:
-            if type(r) == str:
+            if isinstance(r, str):
                 for c in installed_challenges:
                     if c["name"] == r:
                         required_challenges.append(c["id"])
-            elif type(r) == int:
+            elif isinstance(r, int):
                 required_challenges.append(r)
 
         required_challenges = list(set(required_challenges))
@@ -331,7 +336,7 @@ def lint_challenge(path):
     try:
         challenge = load_challenge(path)
     except yaml.YAMLError as e:
-        logging.warning(f"Error parsing challenge.yml: {e}")
+        logging.warning("Error parsing challenge.yml: %s", e)
         exit(1)
 
     required_fields = ["name", "author", "category", "description", "value"]
@@ -368,6 +373,7 @@ def lint_challenge(path):
         proc = subprocess.run(
             ["docker", "run", "--rm", "-i", "hadolint/hadolint"],
             input=dockerfile.encode(),
+            check=False
         )
         if proc.returncode != 0:
             print("Hadolint found Dockerfile lint issues, please resolve")
