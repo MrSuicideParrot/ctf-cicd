@@ -1,0 +1,72 @@
+name: Linting CI
+
+on:
+  push:
+    paths:
+      - 'ctfcicd/**'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'ctfcicd/**'
+    branches:
+      - main
+
+env:
+  DIR_PATH: /
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.DIR_PATH }}
+
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+    steps:
+
+    - name: Checkout the repository
+      uses: actions/checkout@v4
+
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+        
+    - name: Analysing the code with pylint
+      run: |
+        set +e
+        mkdir -p reports
+        
+        rm -f pylint_report.txt
+
+        echo "$(date)" > pylint_report.txt
+        pylint $(git ls-files '*.py') --output-format=text >> pylint_report.txt
+        
+        # Define the file path
+        file_path="pylint_report.txt"
+        
+        # Use grep to extract the relevant line from the file
+        rating_line=$(grep -o "Your code has been rated at [0-9.]\+/10" "$file_path")
+        
+        # Extract the float number from the matched line
+        score=$(echo "$rating_line" | grep -E -o "[0-9]+\.[0-9]+/10" | awk -F'/' '{print $1}')
+        
+        echo "$(cat $file_path)"
+        
+        if [ $(echo "$score >= 9" | bc -l) -eq 1 ]; then  
+          echo "Pylint score is $score. The code meets the required standard (score >= 9)."
+          exit 0  # Success
+        else
+          echo "Pylint score is $score. The code does not meet the required standard (score < 9)."
+          exit 1  # Failure
+        fi
