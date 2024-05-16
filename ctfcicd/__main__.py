@@ -21,12 +21,10 @@ def main():
     if args.commits is not None and len(args.commits) == 2:
         CiCd(not args.testing, not args.insecure_tls_verification).sync_folder_with_git(
             *args.commits)
-    elif args.challenges is not None:
-        CiCd(not args.testing,
-             not args.insecure_tls_verification).deploy_current_folder()
     else:
         CiCd(not args.testing,
-             not args.insecure_tls_verification).deploy_current_folder()
+             not args.insecure_tls_verification).deploy_current_folder(*args.challenges or ())
+
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import re
 import logging as log
 import subprocess
 from urllib.parse import urlparse
+from typing import List
 
 from ctfcicd.utils.deploy import DEPLOY_HANDLERS
 from ctfcicd.utils.config import Config
@@ -65,8 +66,8 @@ class CiCd:
                         "Provided host has no URI scheme. Provide a URI scheme like ssh:// or registry://")
 
                 try:
-                    port = DEPLOY_HANDLERS[url.scheme](
-                        challenge=chall_class, host=target_host, network=self.deploy_network
+                    port = DEPLOY_HANDLERS[url.scheme](  # type: ignore
+                        challenge=chall_class, host=target_host, network=self.deploy_network  # type: ignore
                     )
                 except Exception as e:
                     log.warning("Error while deploying challenge - %s", str(e))
@@ -74,17 +75,33 @@ class CiCd:
 
                 if port is not None:
                     log.info("Challenge %s deployed at %s:%s", challenge,
-                             url.netloc[url.netloc.find('@') + 1:], port) # type: ignore
+                             url.netloc[url.netloc.find('@') + 1:], port)  # type: ignore
 
     # Synchronize all challenges in the given category, where each challenge is in it's own folder.
-    def sync_folder(self, category: str):
-        local_challenges = [f"{category}/{name}" for name in os.listdir(f"./{category}") if
-                            os.path.isdir(f"{category}/{name}")]
+    def sync_folder(self, category: str, challenges: List[str]) -> None:
+        local_challenges, deployed_challs = [], []
 
+        for name in os.listdir(f"./{category}"):
+            if os.path.isdir(f"{category}/{name}"):
+                local_challenges += [f"{category}/{name}"]
+                if name in challenges:
+                    challenges.remove(name)
+                    self.deploy_challenge(f"{category}/{name}")
+                    deployed_challs += [name]
+
+        if len(deployed_challs) == 0 and len(challenges) == 0:
+            self.deploy_all_challenges(local_challenges)
+        else:
+            not_deployed_challs = set(
+                challenges).difference(set(deployed_challs))
+            for c in not_deployed_challs:
+                log.warning("Challenge %s does not exist", c)
+
+    def deploy_all_challenges(self, local_challenges) -> None:
         for challenge in local_challenges:
             self.deploy_challenge(challenge)
 
-    def sync_folder_with_git(self, github_event, github_sha):
+    def sync_folder_with_git(self, github_event, github_sha) -> None:
         log.info("Differential syncronise")
         try:
             files = subprocess.check_output(
@@ -97,15 +114,23 @@ class CiCd:
             log.warning("Error running - %s", e)
             self.deploy_current_folder()
 
-    def deploy_current_folder(self):
+    def deploy_current_folder(self, *challenges) -> None:
+        challs: List[str] = list(challenges)
+        initial_challs_len = len(challenges)
+
         for category in self.get_categories():
             log.info("Synchronizing %s challenges", category)
-            self.sync_folder(category)
+            # challenges variable is pass-by-reference
+            # https://www.geeksforgeeks.org/pass-by-reference-vs-value-in-python/
+            if initial_challs_len != 0 and len(challs) == 0:
+                continue
+            else:
+                self.sync_folder(category, challs)
 
     # Each category is in it's own directory,
     # get the names of all directories that do not begin with '.'.
     @staticmethod
-    def get_categories():
+    def get_categories() -> List[str]:
         denylist_regex = r"\..*"
 
         categories = [name for name in os.listdir(".") if
