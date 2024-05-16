@@ -1,0 +1,38 @@
+name: Deploy all challenges
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  actions: read
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Fetch Git Repo
+      uses: actions/checkout@master
+      with:
+        fetch-depth: 0
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip' # caching pip dependencies
+    - name: Install ctfdcicd
+      run:  pip install -r requirements.txt
+    - name: Setup docker-compose
+      uses: supplypike/setup-bin@v3
+      with:
+        uri: 'https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-linux-x86_64'
+        name: 'docker-compose'
+        version: 'v2.20.3'
+    - name: Deploy all challenges
+      run: ctfcicd 
+      env:
+        CTFD_TOKEN: ${{ secrets.CTFD_TOKEN }}
+        CTFD_URL: ${{ secrets.CTFD_URL }}
+        DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
