@@ -19,9 +19,10 @@ class Config:
             raise ValueError(
                 "CTFD_TOKEN and CTFD_URL environment variables must be set")
 
-        self.docker_compose_name: List[str] = self._find_docker_compose()
+        self.docker_compose_name: List[str] = self.find_docker_compose()
 
-    def _find_docker_compose(self) -> List[str]:
+    @staticmethod
+    def find_docker_compose() -> List[str]:
         docker_compose_name: List[str] = []
         status, _ = subprocess.getstatusoutput("docker-compose -v")
 
